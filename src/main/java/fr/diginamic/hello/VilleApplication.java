@@ -24,12 +24,17 @@ public class VilleApplication {
             v1.setNom("Paris");
             v1.setPopulation(2140526);
 
-            Ville v2 = new Ville();
-            v2.setNom("Lyon");
-            v2.setPopulation(  1475600 );
+            Ville v2 = new Ville(null,"Lyon", 515695);
+
+
+            Ville v3 = Ville.builder()
+                    .nom("Marseille")
+                    .population(861635)
+                    .build();
 
             villeRepository.save(v1);
             villeRepository.save(v2);
+            villeRepository.save(v3);
 
 
             List<Ville> villeList = villeRepository.findAll();
