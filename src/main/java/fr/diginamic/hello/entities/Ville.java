@@ -1,9 +1,6 @@
 package fr.diginamic.hello.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -13,17 +10,26 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Entity
+@Table(name = "ville")
 public class Ville {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    @NotNull (message = "Le nom de la ville ne peut pas être vide")
-    @Size(min = 2, max = 50, message = "Le nom de la ville doit contenir entre 2 et 50 caractères")
     private String nom;
-    @Min(value = 1, message = "La population doit être supérieure à 0")
+    @Column(name= "nb_habs")
     private Integer population;
+
+    @ManyToOne
+    @JoinColumn(name = "id_dept")
+    private Departement departement;
+
+    public Ville(String nom, Integer population, Departement departement) {
+        this.nom = nom;
+        this.population = population;
+        this.departement = departement;
+    }
 }

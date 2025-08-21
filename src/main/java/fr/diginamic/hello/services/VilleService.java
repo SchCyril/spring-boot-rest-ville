@@ -62,8 +62,11 @@ public class VilleService {
      * @return une liste de toutes les villes après l'insertion
      */
     public List<Ville> insertVille(Ville ville) {
-        if (villeRepository.findByNom(ville.getNom()).isPresent()) {
-            throw new IllegalArgumentException("La ville " + ville.getNom() + " existe déjà.");
+        if (villeRepository.findByNom(ville.getNom()).isPresent() && villeRepository.findByDepartement(ville.getDepartement()).contains(ville)) {
+            throw new IllegalArgumentException("La ville " + ville.getNom() + " existe déjà dans le département " + ville.getDepartement().getNom() + ".");
+        }
+        if (ville.getPopulation() == null || ville.getPopulation() <= 0) {
+            throw new IllegalArgumentException("La population doit être supérieure à 0.");
         }
         villeRepository.save(ville);
         return villeRepository.findAll();
@@ -87,6 +90,9 @@ public class VilleService {
         if (villeModifiee.getPopulation() != null) {
             villeExistante.setPopulation(villeModifiee.getPopulation());
         }
+        if (villeModifiee.getDepartement() != null) {
+            villeExistante.setDepartement(villeModifiee.getDepartement());
+        }
 
         villeRepository.save(villeExistante);
         return villeRepository.findAll();
@@ -106,4 +112,6 @@ public class VilleService {
         return villeRepository.findAll();
 
     }
+
+
 }

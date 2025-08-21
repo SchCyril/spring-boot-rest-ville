@@ -5,10 +5,9 @@ import fr.diginamic.hello.services.VilleService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/ville")
+@RequestMapping("/villes")
 public class VilleController {
 
    private final VilleService villeService;
@@ -22,7 +21,7 @@ public class VilleController {
      * @return une liste de villes
      */
 
-    @GetMapping("/villes")
+    @GetMapping("/")
     public List<Ville> getVilles() {
         return villeService.extractVilles();
     }
@@ -33,7 +32,7 @@ public class VilleController {
      * @return un Optional de la ville cherché par son id
      */
 
-    @GetMapping("/{id}")
+    @GetMapping("/ville/{id}")
     public Ville getVilleById(@PathVariable int id) {
         return villeService.extractVille(id);
     }
@@ -44,8 +43,8 @@ public class VilleController {
      * @return un Optional de la ville par son nom
      */
 
-    @GetMapping("/{id}")
-    public Ville getVilleByNom(@RequestParam String nom) {
+    @GetMapping("/{nom}")
+    public Ville getVilleByNom(@PathVariable String nom) {
         return villeService.extractVille(nom);
     }
 
@@ -59,16 +58,26 @@ public class VilleController {
         return villeService.insertVille(ville);
     }
 
+    /**
+     * Modifie la ville entrée en paramètre
+     * @param id de la ville à modifier
+     * @param ville
+     * @return la liste de toutes les villes après modification de la Ville
+     */
 
     @PutMapping("/{id}")
     public List<Ville> updateVille(@PathVariable int id, @RequestBody Ville ville) {
         return villeService.modifierVille(id, ville);
     }
 
+    /**
+     * Supprime la ville entrée en paramètre
+     * @param id de la ville à supprimer
+     * @return la liste de toutes les villes après suppression de la Ville
+     */
 
     @DeleteMapping("/{id}")
     public List<Ville> deleteVille(@PathVariable int id) {
-
         return villeService.supprimerVille(id);
     }
 }
