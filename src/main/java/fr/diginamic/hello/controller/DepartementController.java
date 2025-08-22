@@ -1,11 +1,8 @@
 package fr.diginamic.hello.controller;
 
-import fr.diginamic.hello.entities.Departement;
-import fr.diginamic.hello.entities.Ville;
-import fr.diginamic.hello.repositories.DepartementRepository;
+import fr.diginamic.hello.dto.DepartementDTO;
+import fr.diginamic.hello.dto.VilleDTO;
 import fr.diginamic.hello.services.DepartementService;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,7 +25,7 @@ public class DepartementController {
      */
 
     @GetMapping
-    public List<Departement> getAllDepartements() {
+    public List<DepartementDTO> getAllDepartements() {
         return departementService.getAllDepartements();
     }
 
@@ -39,8 +36,8 @@ public class DepartementController {
      * @return le département correspondant au code
      */
 
-    @GetMapping("/{code}")
-    public Departement getDepartementByCode(@PathVariable String code) {
+    @GetMapping("/departement/{code}")
+    public DepartementDTO getDepartementByCode(@PathVariable String code) {
         return departementService.getDepartementByCode(code);
     }
 
@@ -52,7 +49,7 @@ public class DepartementController {
      */
 
     @PostMapping
-    public Departement addDepartement(@RequestBody Departement departement) {
+    public List<DepartementDTO> addDepartement(@RequestBody DepartementDTO departement) {
         return departementService.addDepartement(departement);
     }
 
@@ -64,8 +61,8 @@ public class DepartementController {
      * @return le département mis à jour
      */
 
-    @PutMapping("/{code}")
-    public Departement updateDepartement(@PathVariable String code, @RequestBody Departement departement) {
+    @PutMapping("/departement/{code}")
+    public List<DepartementDTO> updateDepartement(@PathVariable String code, @RequestBody DepartementDTO departement) {
         return departementService.updateDepartement(code, departement);
     }
 
@@ -75,34 +72,31 @@ public class DepartementController {
      * @param code le code du département à supprimer
      */
 
-    @DeleteMapping("/{code}")
-    public void deleteDepartement(@PathVariable String code) {
+    @DeleteMapping("/departement/{code}")
+    public List<DepartementDTO> deleteDepartement(@PathVariable String code) {
         departementService.deleteDepartement(code);
+        return departementService.getAllDepartements();
     }
 
     /**
      * Récupère le nombre de villes passé en paramètre dans un département donné
      * par exemple http://localhost:8080/departements/villes/34/5
-     * @param departement le département dont on veut les villes
+     * @Param code du département
      * @Param nombre de villes à récupérer
      * @return une liste de villes dans le département spécifié
      */
 
     @GetMapping("/villes/{dep}/{nb}")
-    public List<Ville> getVillesByDepartementAndNombre(@PathVariable("dep") String departement,
-                                                       @PathVariable("nb") int nombre) {
+    public List<VilleDTO> getVillesByDepartementAndNombre(@PathVariable("dep") String code,
+                                                          @PathVariable("nb") int nombre) {
 
-        Departement dep = departementService.getDepartementByCode(departement);
-        if (dep == null) {
-            throw new EntityNotFoundException("Département non trouvé avec le code : " + departement);
-        }
-        return departementService.getVillesByDepartementAndNombre(dep, nombre);
+        return departementService.getVillesByDepartementAndNombre(code, nombre);
     }
 
 
     /**
      * Récupère les villes d'un département avec une plage de population.
-     * par exemple http://localhost:8080/departements/villes/search?code=34&min=25000&max=50000
+     * Par exemple http://localhost:8080/departements/villes/search?code=34&min=25000&max=50000
      *
      * @param departementCode le code du département
      * @param populationMin   la population minimale
@@ -110,7 +104,7 @@ public class DepartementController {
      * @return une liste de villes dans le département spécifié avec la plage de population
      */
     @GetMapping("/villes/search")
-    public List<Ville> getVillesByDepartementAndPopulationRange(@RequestParam("code") String departementCode,
+    public List<VilleDTO> getVillesByDepartementAndPopulationRange(@RequestParam("code") String departementCode,
                                                                 @RequestParam("min") Integer populationMin,
                                                                 @RequestParam("max") Integer populationMax) {
         return departementService.getVillesByDepartementAndPopulationRange(departementCode, populationMin, populationMax);

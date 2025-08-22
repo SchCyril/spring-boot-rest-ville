@@ -1,5 +1,7 @@
 package fr.diginamic.hello.services;
 
+import fr.diginamic.hello.dto.DepartementDTO;
+import fr.diginamic.hello.dto.VilleDTO;
 import fr.diginamic.hello.entities.Departement;
 import fr.diginamic.hello.entities.Ville;
 import fr.diginamic.hello.repositories.DepartementRepository;
@@ -8,8 +10,6 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class DepartementService {
@@ -22,58 +22,136 @@ public class DepartementService {
         this.villeRepository = villeRepository;
     }
 
-    public List<Departement> getAllDepartements() {
-        return departementRepository.findAll();
+    /**
+     * Récupère une liste de tous les départements.
+     *
+     * @return une liste de tous les départements
+     */
+
+    public List<DepartementDTO> getAllDepartements() {
+        return departementRepository.findAll().stream()
+                .map(DepartementDTO::fromEntity)
+                .toList();
     }
 
-    public Departement getDepartementByCode(String code) {
+    /**
+     * Récupère un département par son code.
+     *
+     * @param code le code du département
+     * @return le département correspondant au code
+     * @throws EntityNotFoundException si le département n'est pas trouvé
+     */
+
+    public DepartementDTO getDepartementByCode(String code) {
         return departementRepository.findByCode(code)
+                .map(DepartementDTO::fromEntity)
                 .orElseThrow(() -> new EntityNotFoundException("Département non trouvé avec le code : " + code));
     }
 
-    public Departement addDepartement(Departement departement) {
-        return departementRepository.save(departement);
+    /**
+     * Ajoute un nouveau département.
+     *
+     * @param departementDto le département à ajouter
+     * @return une liste mise à jour de tous les départements après l'ajout
+     * @throws IllegalArgumentException si le code du département est nul
+     */
+
+    public List<DepartementDTO> addDepartement(DepartementDTO departementDto) {
+        if (departementDto.code() == null) {
+            throw new IllegalArgumentException("Le nom et le code du département ne peuvent pas être nuls.");
+        }
+       departementRepository.save(departementDto.toEntity());
+         return departementRepository.findAll().stream()
+                .map(DepartementDTO::fromEntity)
+                .toList();
     }
 
-    public Departement updateDepartement(String code, Departement departement) {
-        Departement existingDepartement = departementRepository.findByCode(code)
+    /**
+     * Met à jour un département existant.
+     *
+     * @param code        le code du département à mettre à jour
+     * @param departement les nouvelles informations du département
+     * @return une liste mise à jour de tous les départements après la mise à jour
+     * @throws EntityNotFoundException si le département n'est pas trouvé
+     */
+
+    public List<DepartementDTO> updateDepartement(String code, DepartementDTO departement) {
+        Departement departementExistant = departementRepository.findByCode(code)
                 .orElseThrow(() -> new EntityNotFoundException("Département non trouvé avec le code : " + code));
 
-        existingDepartement.setNom(departement.getNom());
-        existingDepartement.setCode(departement.getCode());
+        if(departement.code() != null) {
+            departementExistant.setCode(departement.code());
+        }
 
-        return departementRepository.save(existingDepartement);
+
+        departementRepository.save(departementExistant);
+        return departementRepository.findAll().stream()
+                .map(DepartementDTO::fromEntity)
+                .toList();
     }
 
-    public void deleteDepartement(String code) {
+    /**
+     * Supprime un département par son code.
+     *
+     * @param code le code du département à supprimer
+     * @return une liste mise à jour de tous les départements après la suppression
+     */
+
+    public List<DepartementDTO> deleteDepartement(String code) {
         Departement departement = departementRepository.findByCode(code)
                 .orElseThrow(() -> new EntityNotFoundException("Département non trouvé avec le code : " + code));
         departementRepository.delete(departement);
+        return departementRepository.findAll().stream()
+                .map(DepartementDTO::fromEntity)
+                .toList();
     }
 
     /**
      * Récupère une liste de villes d'un département avec une limite sur le nombre de villes.
      *
-     * @param departement le département dont on veut les villes
+     * @param code        le code du département
      * @param nombre      le nombre maximum de villes à récupérer
      * @return une liste de villes du département, limitée au nombre spécifié
      */
 
-    public List<Ville> getVillesByDepartementAndNombre(Departement departement, int nombre) {
-        Optional<Departement> dep = departementRepository.findByCode(departement.getCode());
-        if (dep.isEmpty()) {
-            throw new EntityNotFoundException("Département non trouvé avec le code : " + departement.getCode());
-        }
-        return villeRepository.findByDepartement(departement).stream().filter(p -> p.getPopulation() > nombre).collect(Collectors.toList());
+    public List<VilleDTO> getVillesByDepartementAndNombre(String code, int nombre) {
+        // Vérifie que le département existe
+        Departement departement = departementRepository.findByCode(code)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Département non trouvé avec le code : " + code));
 
+        // Récupère les villes associées à ce département
+        List<Ville> villes = villeRepository.findByDepartement_Code(code);
+
+        // Filtre les villes nulles ou sans département, limite le nombre, et map en DTO
+        return villes.stream()
+                .filter(v -> v.getDepartement() != null)  // évite le NPE
+                .limit(nombre)
+                .map(VilleDTO::fromEntity)
+                .toList();
     }
 
 
-    public List<Ville> getVillesByDepartementAndPopulationRange(String departementCode, Integer populationMin, Integer populationMax) {
-        Departement departement = departementRepository.findByCode(departementCode)
-                .orElseThrow(() -> new EntityNotFoundException("Département non trouvé avec le code : " + departementCode));
+    /**
+     * Récupère une liste de villes d'un département dont la population est comprise dans une plage donnée.
+     *
+     * @param code          le code du département
+     * @param populationMin la population minimale
+     * @param populationMax la population maximale
+     * @return une liste de villes du département dont la population est dans la plage spécifiée
+     * @throws EntityNotFoundException si le département n'est pas trouvé
+     */
 
-        return departementRepository.findByCodeAndPopulationBetween(departement.getCode(), populationMin, populationMax);
+    public List<VilleDTO> getVillesByDepartementAndPopulationRange(String code, Integer populationMin,
+                                                            Integer populationMax) {
+
+        List<Ville> villes = departementRepository.findByCodeAndPopulationBetween(code, populationMin, populationMax);
+        if (code == null) {
+            throw new EntityNotFoundException("Département non trouvé avec le code : " + code);
+        }
+        return villes.stream()
+                .map(VilleDTO::fromEntity)
+                .toList();
 
     }
 }

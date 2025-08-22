@@ -1,12 +1,14 @@
 package fr.diginamic.hello.services;
 
+import fr.diginamic.hello.dto.VilleDTO;
+import fr.diginamic.hello.entities.Departement;
 import fr.diginamic.hello.entities.Ville;
+import fr.diginamic.hello.repositories.DepartementRepository;
 import fr.diginamic.hello.repositories.VilleRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class VilleService {
@@ -14,14 +16,16 @@ public class VilleService {
      * Service pour gérer les opérations liées aux villes.
      */
     private final VilleRepository villeRepository;
+    private final DepartementRepository departementRepository;
 
     /**
      * Constructeur de la classe VilleService.
      *
      * @param villeRepository le repository pour accéder aux données des villes
      */
-    public VilleService(VilleRepository villeRepository) {
+    public VilleService(VilleRepository villeRepository, DepartementRepository departementRepository) {
         this.villeRepository = villeRepository;
+        this.departementRepository = departementRepository;
     }
 
     /**
@@ -29,8 +33,10 @@ public class VilleService {
      *
      * @return une liste de toutes les villes
      */
-    public List<Ville> extractVilles() {
-        return villeRepository.findAll();
+    public List<VilleDTO> extractVilles() {
+        return villeRepository.findAll().stream()
+                .map(VilleDTO::fromEntity)
+                .toList();
     }
 
     /**
@@ -40,9 +46,10 @@ public class VilleService {
      * @return une Optional contenant la ville si elle existe, sinon une exception est levée
      */
 
-    public Ville extractVille(int idVille) {
-        return villeRepository.findById((long) idVille).orElseThrow(() -> new EntityNotFoundException("Ville n'existe" +
-                " pas"));
+    public VilleDTO extractVille(int idVille) {
+        return villeRepository.findById((long) idVille)
+                .map(VilleDTO::fromEntity)
+                .orElseThrow(() -> new EntityNotFoundException("Ville n'existe pas avec l'ID : " + idVille));
     }
 
     /**
@@ -51,67 +58,83 @@ public class VilleService {
      * @param nom le nom de la ville
      * @return une Optional contenant le nom de la ville si elle existe, sinon une exception est levée
      */
-    public Ville extractVille(String nom) {
-        return villeRepository.findByNom(nom).orElseThrow(() -> new EntityNotFoundException("Ville n'existe pas avec le nom : " + nom));
+    public VilleDTO extractVille(String nom) {
+        return villeRepository.findByNom(nom)
+                .map(VilleDTO::fromEntity)
+                .orElseThrow(() -> new EntityNotFoundException("Ville n'existe pas avec le nom : " + nom));
     }
 
     /**
      * Insère une nouvelle ville dans la base de données.
      *
-     * @param ville la ville à insérer
+     * @param villeDto la ville à insérer
      * @return une liste de toutes les villes après l'insertion
      */
-    public List<Ville> insertVille(Ville ville) {
-        if (villeRepository.findByNom(ville.getNom()).isPresent() && villeRepository.findByDepartement(ville.getDepartement()).contains(ville)) {
-            throw new IllegalArgumentException("La ville " + ville.getNom() + " existe déjà dans le département " + ville.getDepartement().getNom() + ".");
+    public List<VilleDTO> insertVille(VilleDTO villeDto) {
+        if (villeDto.nom() == null || villeDto.population() == null || villeDto.departement_code() == null) {
+            throw new IllegalArgumentException("Le nom, la population et le département de la ville ne peuvent pas être nuls.");
         }
-        if (ville.getPopulation() == null || ville.getPopulation() <= 0) {
-            throw new IllegalArgumentException("La population doit être supérieure à 0.");
-        }
+
+        // On mappe le DTO -> entité de base
+        Ville ville = villeDto.toEntity();
+
+        // On récupère le département depuis la base
+        Departement departement = departementRepository.findByCode(villeDto.departement_code())
+                .orElseThrow(() -> new EntityNotFoundException("Département introuvable avec le code : " + villeDto.departement_code()));
+
+        ville.setDepartement(departement);
+
+        // Sauvegarde
         villeRepository.save(ville);
-        return villeRepository.findAll();
+
+        return villeRepository.findAll().stream()
+                .map(VilleDTO::fromEntity)
+                .toList();
     }
 
-    /**
-     * Modifie une ville existante.
-     *
-     * @param idVille       l'identifiant de la ville à modifier
-     * @param villeModifiee les nouvelles informations de la ville
-     * @return une Optional contenant la ville modifiée si elle existe, sinon une exception est levée
-     */
-
-    public List<Ville> modifierVille(int idVille, Ville villeModifiee) {
+    public List<VilleDTO> updateVille(int idVille, VilleDTO villeModifiee) {
+        // Récupérer la ville existante
         Ville villeExistante = villeRepository.findById((long) idVille)
-                .orElseThrow(() -> new EntityNotFoundException("Ville n'existe pas"));
+                .orElseThrow(() -> new EntityNotFoundException("Ville n'existe pas avec l'ID : " + idVille));
 
-        if (villeModifiee.getNom() != null) {
-            villeExistante.setNom(villeModifiee.getNom());
-        }
-        if (villeModifiee.getPopulation() != null) {
-            villeExistante.setPopulation(villeModifiee.getPopulation());
-        }
-        if (villeModifiee.getDepartement() != null) {
-            villeExistante.setDepartement(villeModifiee.getDepartement());
+        // Nom
+        if (villeModifiee.nom() != null) {
+            villeExistante.setNom(villeModifiee.nom());
         }
 
+        // Population
+        if (villeModifiee.population() != null) {
+            villeExistante.setPopulation(villeModifiee.population());
+        }
+
+        // Département
+        if (villeModifiee.departement_code() != null) {
+            Departement departement = departementRepository.findByCode(villeModifiee.departement_code())
+                    .orElseThrow(() -> new EntityNotFoundException("Département introuvable avec le code : " + villeModifiee.departement_code()));
+            villeExistante.setDepartement(departement);
+        }
+
+        // Sauvegarde
         villeRepository.save(villeExistante);
-        return villeRepository.findAll();
+
+        return villeRepository.findAll().stream()
+                .map(VilleDTO::fromEntity)
+                .toList();
     }
 
-    /**
-     * Supprime une ville par son identifiant.
-     *
-     * @param idVille l'identifiant de la ville à supprimer
-     * @return une Optional contenant la ville supprimée si elle existe, sinon une exception est levée
-     */
-    public List<Ville> supprimerVille(int idVille) {
-        Ville villeExistante = villeRepository.findById((long) idVille)
-                .orElseThrow(() -> new EntityNotFoundException("Ville n'existe pas"));
-
-        villeRepository.delete(villeExistante);
-        return villeRepository.findAll();
+    public List<VilleDTO> deleteVille(int idVille) {
+        Ville ville = villeRepository.findById((long) idVille)
+                .orElseThrow(() -> new EntityNotFoundException("Ville n'existe pas avec l'ID : " + idVille));
+        villeRepository.delete(ville);
+        return villeRepository.findAll().stream()
+                .map(VilleDTO::fromEntity)
+                .toList();
 
     }
 
 
 }
+
+
+
+

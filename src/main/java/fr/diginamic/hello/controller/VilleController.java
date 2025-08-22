@@ -1,5 +1,6 @@
 package fr.diginamic.hello.controller;
 
+import fr.diginamic.hello.dto.VilleDTO;
 import fr.diginamic.hello.entities.Ville;
 import fr.diginamic.hello.services.VilleService;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,8 @@ public class VilleController {
      * @return une liste de villes
      */
 
-    @GetMapping("/")
-    public List<Ville> getVilles() {
+    @GetMapping
+    public List<VilleDTO> getVilles() {
         return villeService.extractVilles();
     }
 
@@ -33,7 +34,7 @@ public class VilleController {
      */
 
     @GetMapping("/ville/{id}")
-    public Ville getVilleById(@PathVariable int id) {
+    public VilleDTO getVilleById(@PathVariable int id) {
         return villeService.extractVille(id);
     }
 
@@ -44,7 +45,7 @@ public class VilleController {
      */
 
     @GetMapping("/{nom}")
-    public Ville getVilleByNom(@PathVariable String nom) {
+    public VilleDTO getVilleByNom(@PathVariable String nom) {
         return villeService.extractVille(nom);
     }
 
@@ -53,9 +54,9 @@ public class VilleController {
      * @param ville
      * @return la liste de toutes les villes après ajout de la nouvelle Ville
      */
-    @PostMapping("/")
-    public List<Ville> addVille(@RequestBody Ville ville) {
-        return villeService.insertVille(ville);
+    @PostMapping("/ville")
+    public List<VilleDTO> addVille(@RequestBody Ville ville) {
+        return villeService.insertVille(VilleDTO.fromEntity(ville));
     }
 
     /**
@@ -65,9 +66,9 @@ public class VilleController {
      * @return la liste de toutes les villes après modification de la Ville
      */
 
-    @PutMapping("/{id}")
-    public List<Ville> updateVille(@PathVariable int id, @RequestBody Ville ville) {
-        return villeService.modifierVille(id, ville);
+    @PutMapping("/ville/{id}")
+    public List<VilleDTO> updateVille(@PathVariable int id, @RequestBody VilleDTO ville) {
+        return villeService.updateVille(id, ville);
     }
 
     /**
@@ -76,8 +77,8 @@ public class VilleController {
      * @return la liste de toutes les villes après suppression de la Ville
      */
 
-    @DeleteMapping("/{id}")
-    public List<Ville> deleteVille(@PathVariable int id) {
-        return villeService.supprimerVille(id);
+    @DeleteMapping("/ville/{id}")
+    public List<VilleDTO> deleteVille(@PathVariable int id) {
+        return villeService.deleteVille(id);
     }
 }

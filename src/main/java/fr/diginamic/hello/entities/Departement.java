@@ -22,7 +22,7 @@ public class Departement {
     private Long id;
     private String code;
     private String nom;
-//
-//    @OneToMany(mappedBy = "departement", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Ville> villes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "departement", cascade = CascadeType.ALL)
+    private List<Ville> villes = new ArrayList<>();
 }

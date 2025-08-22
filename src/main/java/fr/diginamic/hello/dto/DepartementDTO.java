@@ -1,28 +1,19 @@
 package fr.diginamic.hello.dto;
 
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import fr.diginamic.hello.entities.Departement;
 
-public record DepartementDTO(int id,
-                             String code,
-                             String nom) {
+public record DepartementDTO(String code) {
 
-    public DepartementDTO(int id, String code, String nom) {
-        this.id = id;
-        this.code = code;
-        this.nom = nom;
+    // Mapper entité -> DTO
+    public static DepartementDTO fromEntity(Departement departement) {
+        return new DepartementDTO(departement.getCode());
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getNom() {
-        return nom;
+    // Mapper DTO -> entité
+    public Departement toEntity() {
+        Departement d = new Departement();
+        d.setCode(this.code);
+        return d;
     }
 }

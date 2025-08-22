@@ -24,7 +24,7 @@ public class Ville {
     private Integer population;
 
     @ManyToOne
-    @JoinColumn(name = "id_dept")
+    @JoinColumn(name = "departement_id")
     private Departement departement;
 
     public Ville(String nom, Integer population, Departement departement) {
