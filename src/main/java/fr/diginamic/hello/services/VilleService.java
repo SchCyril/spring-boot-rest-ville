@@ -6,6 +6,8 @@ import fr.diginamic.hello.entities.Ville;
 import fr.diginamic.hello.repositories.DepartementRepository;
 import fr.diginamic.hello.repositories.VilleRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -37,6 +39,11 @@ public class VilleService {
         return villeRepository.findAll().stream()
                 .map(VilleDTO::fromEntity)
                 .toList();
+    }
+
+    public Page<VilleDTO> getVillesPagination(int page, int size) {
+        PageRequest pagination = PageRequest.of(page, size);
+        return villeRepository.findAll(pagination).map(VilleDTO::fromEntity);
     }
 
     /**
@@ -71,26 +78,32 @@ public class VilleService {
      * @return une liste de toutes les villes après l'insertion
      */
     public List<VilleDTO> insertVille(VilleDTO villeDto) {
-        if (villeDto.nom() == null || villeDto.population() == null || villeDto.departement_code() == null) {
-            throw new IllegalArgumentException("Le nom, la population et le département de la ville ne peuvent pas être nuls.");
+        if (villeDto.nom() == null) {
+            throw new IllegalArgumentException("Le nom ne peut pas être nul");
+        }
+        if (villeDto.population() == null) {
+            throw new IllegalArgumentException("La population ne peut pas être nulle");
+        }
+        if (villeDto.departementCode() == null) {
+            throw new IllegalArgumentException("Le code du département ne peut pas être nul");
         }
 
-        // On mappe le DTO -> entité de base
-        Ville ville = villeDto.toEntity();
+        Departement departement = departementRepository.findByCode(villeDto.departementCode())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Département introuvable avec le code : " + villeDto.departementCode()));
 
-        // On récupère le département depuis la base
-        Departement departement = departementRepository.findByCode(villeDto.departement_code())
-                .orElseThrow(() -> new EntityNotFoundException("Département introuvable avec le code : " + villeDto.departement_code()));
-
+        Ville ville = new Ville();
+        ville.setNom(villeDto.nom());
+        ville.setPopulation(villeDto.population());
         ville.setDepartement(departement);
 
-        // Sauvegarde
         villeRepository.save(ville);
 
         return villeRepository.findAll().stream()
                 .map(VilleDTO::fromEntity)
                 .toList();
     }
+
 
     public List<VilleDTO> updateVille(int idVille, VilleDTO villeModifiee) {
         // Récupérer la ville existante
@@ -108,9 +121,9 @@ public class VilleService {
         }
 
         // Département
-        if (villeModifiee.departement_code() != null) {
-            Departement departement = departementRepository.findByCode(villeModifiee.departement_code())
-                    .orElseThrow(() -> new EntityNotFoundException("Département introuvable avec le code : " + villeModifiee.departement_code()));
+        if (villeModifiee.departementCode() != null) {
+            Departement departement = departementRepository.findByCode(villeModifiee.departementCode())
+                    .orElseThrow(() -> new EntityNotFoundException("Département introuvable avec le code : " + villeModifiee.departementCode()));
             villeExistante.setDepartement(departement);
         }
 
@@ -130,6 +143,93 @@ public class VilleService {
                 .map(VilleDTO::fromEntity)
                 .toList();
 
+    }
+
+    /**
+     * Récupère une liste de villes dont le nom contient la chaîne spécifiée.
+     *
+     * @param nom la chaîne à rechercher dans les noms des villes
+     * @return une liste de villes dont le nom contient la chaîne spécifiée
+     * @throws EntityNotFoundException si aucune ville n'est trouvée
+     */
+
+    public List<VilleDTO> getVillesByNomContaining(String nom) {
+
+       List<Ville> villes = villeRepository.findByNomContaining(nom);
+
+       if (villes.isEmpty()) {
+              throw new EntityNotFoundException("Aucune ville trouvée contenant : " + nom);
+       }
+         return villes.stream()
+                .map(VilleDTO::fromEntity)
+                .toList();
+
+    }
+
+    /**
+     * Récupère une liste de villes avec une population supérieure à la valeur spécifiée,
+     * triée par population décroissante.
+     *
+     * @param population la population minimale
+     * @return une liste de villes avec une population supérieure à la valeur spécifiée
+     * @throws EntityNotFoundException si aucune ville n'est trouvée
+     */
+
+
+
+    public List<VilleDTO> getVillesByPopulationGreaterThan(int population) {
+
+        List<Ville> villes = villeRepository.findByPopulationGreaterThanOrderByPopulationDesc(population);
+        if (villes.isEmpty()) {
+            throw new EntityNotFoundException("Aucune ville trouvée avec une population supérieure à : " + population);
+        }
+        return villes.stream().map(VilleDTO::fromEntity).toList();
+    }
+
+
+    /**
+     * Récupère une liste de villes avec une population comprise entre les valeurs spécifiées,
+     * triée par population décroissante.
+     *
+     * @param min la population minimale
+     * @param max la population maximale
+     * @return une liste de villes avec une population comprise entre les valeurs spécifiées
+     * @throws EntityNotFoundException si aucune ville n'est trouvée
+     */
+    public List<VilleDTO> getVillesByPopulationBetweenAndOrderByPopulationDesc(int min, int max) {
+       List<Ville> villes = villeRepository.findByPopulationBetweenOrderByPopulationDesc(min, max);
+       if (villes.isEmpty()) {
+           throw new EntityNotFoundException("Aucune ville trouvée avec une population entre : " + min + " et " + max);
+       }
+       return villes.stream().map(VilleDTO::fromEntity).toList();
+    }
+
+    public List<VilleDTO> getVillesByDepartementCodeAndPopulationGreaterThanOrderByPopulationDesc(String code,
+                                                                                                  int population) {
+       List<Ville> villes = villeRepository.findByDepartementCodeAndPopulationGreaterThanOrderByPopulationDesc(code,
+               population);
+       if (villes.isEmpty()) {
+           throw new EntityNotFoundException("Aucune ville trouvée dans le département " + code + " avec une population supérieure à : " + population);
+       }
+       return villes.stream().map(VilleDTO::fromEntity).toList();
+    }
+
+    public List<VilleDTO> getVilleByDepartementCodeAndPopulationBetweenOrderByPopulationDesc(String code, Integer min
+            , Integer max) {
+         List<Ville> villes = villeRepository.findByDepartementCodeAndPopulationBetweenOrderByPopulationDesc(code,
+                 min, max);
+         if (villes.isEmpty()) {
+              throw new EntityNotFoundException("Aucune ville trouvée dans le département " + code + " avec une population entre : " + min + " et " + max);
+         }
+         return villes.stream().map(VilleDTO::fromEntity).toList();
+    }
+
+    public List<VilleDTO> getTopNVillesByPopulation(int n) {
+        List<Ville> villes = villeRepository.findTopNByPopulation(n);
+        if (villes.isEmpty()) {
+            throw new EntityNotFoundException("Aucune ville trouvée.");
+        }
+        return villes.stream().map(VilleDTO::fromEntity).toList();
     }
 
 

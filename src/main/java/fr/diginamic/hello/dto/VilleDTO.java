@@ -3,26 +3,20 @@ package fr.diginamic.hello.dto;
 import fr.diginamic.hello.entities.Departement;
 import fr.diginamic.hello.entities.Ville;
 
-public record VilleDTO(String nom, Integer population, String departement_code) {
+public record VilleDTO(String nom, Integer population, String departementCode) {
 
-    // Mapper entité -> DTO
+    // Mapper Entité -> DTO
     public static VilleDTO fromEntity(Ville ville) {
-        String departementCode = ville.getDepartement() != null ? ville.getDepartement().getCode() : null;
-        return new VilleDTO(ville.getNom(), ville.getPopulation(), departementCode);
+        return new VilleDTO(ville.getNom(), ville.getPopulation(),
+                ville.getDepartement() != null ? ville.getDepartement().getCode() : null);
     }
 
-    // Mapper DTO -> entité
-    public Ville toEntity() {
+    // Mapper DTO -> Entité (on passe le Département existant depuis le service)
+    public Ville toEntity(Departement departement) {
         Ville v = new Ville();
         v.setNom(this.nom);
         v.setPopulation(this.population);
-
-        if (this.departement_code != null) {
-            Departement d = new Departement();
-            d.setCode(this.departement_code);
-            v.setDepartement(d);
-        }
-
+        v.setDepartement(departement); // on associe le vrai département de la DB
         return v;
     }
 }

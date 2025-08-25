@@ -12,7 +12,24 @@ import java.util.Optional;
 
 @Repository
 public interface VilleRepository extends JpaRepository<Ville, Long> {
+
+
     Optional<Ville> findByNom(String nom);
-    List<Ville> findByDepartement_Code(String code);
+    List<Ville> findByDepartementCode(String code);
+    List<Ville> findByDepartementCodeAndPopulationBetween(String code, Integer min, Integer max);
+
+    List<Ville> findByNomContaining(String nom);
+
+    List<Ville> findByPopulationGreaterThanOrderByPopulationDesc(Integer population);
+
+    List<Ville> findByPopulationBetweenOrderByPopulationDesc(Integer min, Integer max);
+
+    List<Ville> findByDepartementCodeAndPopulationGreaterThanOrderByPopulationDesc(String code, Integer population);
+
+    List<Ville> findByDepartementCodeAndPopulationBetweenOrderByPopulationDesc(String code, Integer min, Integer max);
+
+    List<Ville> findTopNByPopulation(int n);
+
+
 
 }

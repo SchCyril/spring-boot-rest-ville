@@ -121,7 +121,7 @@ public class DepartementService {
                         "Département non trouvé avec le code : " + code));
 
         // Récupère les villes associées à ce département
-        List<Ville> villes = villeRepository.findByDepartement_Code(code);
+        List<Ville> villes = villeRepository.findByDepartementCode(code);
 
         // Filtre les villes nulles ou sans département, limite le nombre, et map en DTO
         return villes.stream()
@@ -145,7 +145,7 @@ public class DepartementService {
     public List<VilleDTO> getVillesByDepartementAndPopulationRange(String code, Integer populationMin,
                                                             Integer populationMax) {
 
-        List<Ville> villes = departementRepository.findByCodeAndPopulationBetween(code, populationMin, populationMax);
+        List<Ville> villes = villeRepository.findByDepartementCodeAndPopulationBetween(code, populationMin, populationMax);
         if (code == null) {
             throw new EntityNotFoundException("Département non trouvé avec le code : " + code);
         }
