@@ -1,16 +1,16 @@
 package fr.diginamic.hello;
 
 import fr.diginamic.hello.dto.DepartementDTO;
-import fr.diginamic.hello.entities.Departement;
 import fr.diginamic.hello.repositories.DepartementRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
-
+@EnableTransactionManagement
 @SpringBootApplication
 public class App implements CommandLineRunner {
 
@@ -21,7 +21,9 @@ public class App implements CommandLineRunner {
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(VilleApplication.class, args);
+        SpringApplication application = new SpringApplication(App.class);
+        application.setWebApplicationType(WebApplicationType.NONE);
+        application.run(args);
     }
 
 
