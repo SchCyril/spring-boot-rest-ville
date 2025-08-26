@@ -28,4 +28,5 @@ public interface IDepartementService {
 
     void exportPDFDepartement(String code, HttpServletResponse response) throws ExceptionFonctionnelle,
             DocumentException, IOException;
+
 }

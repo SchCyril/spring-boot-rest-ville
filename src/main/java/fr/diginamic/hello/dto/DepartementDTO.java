@@ -1,6 +1,7 @@
 package fr.diginamic.hello.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.diginamic.hello.entities.Departement;
 import jakarta.validation.constraints.NotBlank;
 

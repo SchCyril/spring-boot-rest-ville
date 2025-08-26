@@ -11,7 +11,6 @@ import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import java.util.List;
 
 @SpringBootApplication
-@EnableSpringDataWebSupport
 public class VilleApplication {
 
     public static void main(String[] args) {
