@@ -1,5 +1,8 @@
-package fr.diginamic.hello.services;
+package fr.diginamic.hello.impl;
 
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.PdfWriter;
 import fr.diginamic.hello.dto.DepartementDTO;
 import fr.diginamic.hello.dto.VilleDTO;
 import fr.diginamic.hello.entities.Departement;
@@ -7,18 +10,22 @@ import fr.diginamic.hello.entities.Ville;
 import fr.diginamic.hello.exceptions.ExceptionFonctionnelle;
 import fr.diginamic.hello.repositories.DepartementRepository;
 import fr.diginamic.hello.repositories.VilleRepository;
+import fr.diginamic.hello.services.IDepartementService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @Service
-public class DepartementService {
+public class DepartementServiceImpl implements IDepartementService {
 
     private final DepartementRepository departementRepository;
     private final VilleRepository villeRepository;
 
-    public DepartementService(DepartementRepository departementRepository, VilleRepository villeRepository) {
+    public DepartementServiceImpl(DepartementRepository departementRepository, VilleRepository villeRepository) {
         this.departementRepository = departementRepository;
         this.villeRepository = villeRepository;
     }
@@ -29,6 +36,7 @@ public class DepartementService {
      * @return une liste de tous les départements
      */
 
+    @Override
     public List<DepartementDTO> getAllDepartements() {
         return departementRepository.findAll().stream()
                 .map(DepartementDTO::fromEntity)
@@ -43,6 +51,7 @@ public class DepartementService {
      * @throws EntityNotFoundException si le département n'est pas trouvé
      */
 
+    @Override
     public DepartementDTO getDepartementByCode(String code) throws  ExceptionFonctionnelle {
         return departementRepository.findByCode(code)
                 .map(DepartementDTO::fromEntity)
@@ -57,6 +66,7 @@ public class DepartementService {
      * @throws IllegalArgumentException si le code du département est nul
      */
 
+    @Override
     public List<DepartementDTO> addDepartement(DepartementDTO departementDto) throws ExceptionFonctionnelle {
 
 
@@ -83,6 +93,7 @@ public class DepartementService {
      * @throws EntityNotFoundException si le département n'est pas trouvé
      */
 
+    @Override
     public List<DepartementDTO> updateDepartement(String code, DepartementDTO departement) throws  ExceptionFonctionnelle {
         Departement departementExistant = departementRepository.findByCode(code)
                 .orElseThrow(() -> new ExceptionFonctionnelle("Département non trouvé avec le code : " + code));
@@ -105,6 +116,7 @@ public class DepartementService {
      * @return une liste mise à jour de tous les départements après la suppression
      */
 
+    @Override
     public List<DepartementDTO> deleteDepartement(String code) throws   ExceptionFonctionnelle {
         Departement departement = departementRepository.findByCode(code)
                 .orElseThrow(() -> new ExceptionFonctionnelle("Département non trouvé avec le code : " + code));
@@ -122,6 +134,7 @@ public class DepartementService {
      * @return une liste de villes du département, limitée au nombre spécifié
      */
 
+    @Override
     public List<VilleDTO> getVillesByDepartementAndNombre(String code, int nombre) throws  ExceptionFonctionnelle {
         // Vérifie que le département existe
         Departement departement = departementRepository.findByCode(code)
@@ -150,8 +163,9 @@ public class DepartementService {
      * @throws EntityNotFoundException si le département n'est pas trouvé
      */
 
+    @Override
     public List<VilleDTO> getVillesByDepartementAndPopulationRange(String code, Integer populationMin,
-                                                            Integer populationMax) throws ExceptionFonctionnelle{
+                                                                   Integer populationMax) throws ExceptionFonctionnelle{
 
         List<Ville> villes = villeRepository.findByDepartementCodeAndPopulationBetween(code, populationMin, populationMax);
         if (code == null) {
@@ -162,4 +176,50 @@ public class DepartementService {
                 .toList();
 
     }
+
+    /**
+     * Exporte au format pdf la liste des villes
+      * @param code
+     * @param response
+     * @throws ExceptionFonctionnelle
+     * @throws DocumentException
+     * @throws IOException
+     */
+
+    @Override
+    public void exportPDFDepartement(String code, HttpServletResponse response)
+            throws ExceptionFonctionnelle, DocumentException, IOException {
+
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=\"departement.pdf\"");
+
+        Departement departement = departementRepository.findByCode(code)
+                .orElseThrow(() -> new ExceptionFonctionnelle("Département introuvable : " + code));
+
+        Document document = new Document(PageSize.A4);
+        PdfWriter.getInstance(document, response.getOutputStream());
+
+        document.open();
+        document.addTitle("Département");
+
+        BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.WINANSI, BaseFont.EMBEDDED);
+        Font font = new Font(baseFont, 16.0f, Font.BOLD, new BaseColor(0, 51, 80));
+
+        document.add(new Phrase("Code : " + departement.getCode(), font));
+        document.add(new Paragraph(" "));
+
+        StringBuilder villesStr = new StringBuilder();
+        for (Ville ville : departement.getVilles()) {
+            villesStr.append("- ")
+                    .append(ville.getNom())
+                    .append(" (")
+                    .append(ville.getPopulation())
+                    .append(" hab.)\n");
+        }
+
+        document.add(new Phrase("Villes :\n" + villesStr, font));
+
+        document.close();
+    }
+
 }

@@ -1,206 +1,95 @@
 package fr.diginamic.hello.controller;
 
+import com.itextpdf.text.DocumentException;
+import fr.diginamic.hello.dto.DepartementDTO;
 import fr.diginamic.hello.dto.VilleDTO;
-import fr.diginamic.hello.entities.Ville;
 import fr.diginamic.hello.exceptions.ExceptionFonctionnelle;
-import fr.diginamic.hello.services.VilleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
-@RestController
-@RequestMapping("/villes")
-public class VilleController implements InterfaceVilleController {
-
-    private final VilleService villeService;
-
-    public VilleController(VilleService villeService) {
-        this.villeService = villeService;
-    }
-
-    /**
-     * Affiche la liste de toutes les villes avec pagination
-     * page : numéro de la page (0-indexed)
-     * size : nombre d'éléments par page
-     *
-     * @return la liste de toutes les villes
-     */
+public interface VilleController {
 
 
+    @Operation(summary = "Retourne la liste de tous les départements")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Liste des villes au format JSON",
+                    content = {@Content(mediaType = "application/json", array = @ArraySchema(schema =
+                    @Schema(implementation = DepartementDTO.class)))})
+    })
+    List<VilleDTO> getVilles();
 
-    @GetMapping()
-    @Override
-    public List<VilleDTO> getVilles() {
-        return villeService.extractVilles();
-    }
+    @Operation(summary = "Retourne la liste de tous les départements avec une pagination")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Liste des villes au format JSON",
+                    content = {@Content(mediaType = "application/json", array = @ArraySchema(schema =
+                    @Schema(implementation = VilleDTO.class)))})
+    })
+    Page<VilleDTO> getVillesPagination(int page, int size) throws ExceptionFonctionnelle;
 
-    /**
-     * Récupère la liste de toutes les villes en Pagination
-     * Exemple http://localhost:8080/villes/pagination?page=0&size=5
-     *
-     * @param page
-     * @param size
-     * @return la liste de toutes les villes
-     */
+    VilleDTO getVilleById(int id) throws ExceptionFonctionnelle;
 
-    @GetMapping("/pagination")
-    @Override
-    public Page<VilleDTO> getVillesPagination(@RequestParam int page, @RequestParam int size) throws ExceptionFonctionnelle {
-        return villeService.getVillesPagination(page, size);
-    }
+    VilleDTO getVilleByNom(String nom) throws ExceptionFonctionnelle;
 
-    /**
-     * Affiche la ville cherchée par son ID
-     *
-     * @param id de la ville
-     * @return un Optional de la ville cherché par son id
-     */
 
-    @GetMapping("/ville-id/{id}")
-    @Override
-    public VilleDTO getVilleById(@PathVariable int id) throws ExceptionFonctionnelle {
-        return villeService.extractVille(id);
-    }
+    @Operation(summary = "Retourne la liste de tous les départements après création d'une nouvelle ville")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Créer une ville",
+                    content = {@Content(mediaType = "application/json", array = @ArraySchema(schema =
+                    @Schema(implementation = VilleDTO.class)))})
+    })
+    List<VilleDTO> addVille(VilleDTO villeDTO) throws ExceptionFonctionnelle;
 
-    /**
-     * Affiche la ville cherchée par son nom
-     *
-     * @param nom
-     * @return un Optional de la ville par son nom
-     */
+    @Operation(summary = "Retourne la liste de tous les départements après modification d'une nouvelle ville")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Modifie une ville",
+                    content = {@Content(mediaType = "application/json", array = @ArraySchema(schema =
+                    @Schema(implementation = VilleDTO.class)))})
+    })
+    List<VilleDTO> updateVille(@Parameter(description = "Ajouter l'id obligatoire ", required = true) int id,
+                               VilleDTO ville) throws ExceptionFonctionnelle;
 
-    @GetMapping("/ville-nom/{nom}")
-    @Override
-    public VilleDTO getVilleByNom(@PathVariable String nom) throws ExceptionFonctionnelle {
-        return villeService.extractVille(nom);
-    }
+    @Operation(summary = "Retourne la liste de tous les départements après suppression d'une nouvelle ville")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Supprime une ville",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = VilleDTO.class)),
+                    }),
+            @ApiResponse(responseCode = "400",
+                    description = "Département non trouvé", content = @Content())
+    })
+    List<VilleDTO> deleteVille(@Parameter(description = "Identifiant de la ville à récupérer", example = "34", required = true) int id) throws ExceptionFonctionnelle;
 
-    /**
-     * Insère en base la ville entrée en paramètre
-     *
-     * @param villeDTO
-     * @return la liste de toutes les villes après ajout de la nouvelle Ville
-     */
-    @PostMapping("/ville")
-    @Override
-    public List<VilleDTO> addVille(@RequestBody VilleDTO villeDTO) throws ExceptionFonctionnelle {
-        return villeService.insertVille(villeDTO);
-    }
+    List<VilleDTO> getVillesByNomContaining(String nom) throws ExceptionFonctionnelle;
 
-    /**
-     * Modifie la ville entrée en paramètre
-     *
-     * @param id    de la ville à modifier
-     * @param ville
-     * @return la liste de toutes les villes après modification de la Ville
-     */
+    List<VilleDTO> getVillesByPopulationGreaterThan(int population) throws ExceptionFonctionnelle;
 
-    @PutMapping("/ville/{id}")
-    @Override
-    public List<VilleDTO> updateVille(@PathVariable int id, @RequestBody VilleDTO ville) throws ExceptionFonctionnelle {
-        return villeService.updateVille(id, ville);
-    }
+    List<VilleDTO> getVillesByPopulationBetweenAndOrderByPopulationDesc(int populationMin,
+                                                                        int populationMax) throws ExceptionFonctionnelle;
 
-    /**
-     * Supprime la ville entrée en paramètre
-     *
-     * @param id de la ville à supprimer
-     * @return la liste de toutes les villes après suppression de la Ville
-     */
+    List<VilleDTO> getVillesByDepartementCodeAndPopulationGreaterThanOderByPopulationDesc(String code,
+                                                                                          int population) throws ExceptionFonctionnelle;
 
-    @DeleteMapping("/ville/{id}")
-    @Override
-    public List<VilleDTO> deleteVille(@PathVariable int id) throws ExceptionFonctionnelle {
-        return villeService.deleteVille(id);
-    }
+    List<VilleDTO> getVilleByDepartementCodeAndPopulationBetweenOderByPopulationDesc(String code,
+                                                                                     int populationMin,
+                                                                                     int populationMax) throws ExceptionFonctionnelle;
 
-    /**
-     * Récupère une liste de villes dont le nom contient la chaîne spécifiée.
-     * Par exemple : /villes/contains?nom=par
-     *
-     * @param nom la chaîne à rechercher dans les noms de villes
-     * @return une liste de villes dont le nom contient la chaîne spécifiée
-     */
-    @GetMapping("/contains")
-    @Override
-    public List<VilleDTO> getVillesByNomContaining(@RequestParam String nom) throws ExceptionFonctionnelle {
-        return villeService.getVillesByNomContaining(nom);
-    }
+    List<VilleDTO> getTopNVillesByPopulation() throws ExceptionFonctionnelle;
 
-    /**
-     * Récupère une liste de villes avec une population supérieure à la valeur spécifiée
-     * Par exemple : /villes/popMin/10000
-     *
-     * @param population la population minimale
-     * @return une liste de villes avec une population supérieure à la valeur spécifiée
-     */
-    @GetMapping("/popMin/{population}")
-    @Override
-    public List<VilleDTO> getVillesByPopulationGreaterThan(@PathVariable int population) throws ExceptionFonctionnelle {
-        return villeService.getVillesByPopulationGreaterThan(population);
-    }
-
-    /**
-     * Récupère une liste de villes avec une population comprise entre les valeurs spécifiées
-     * Triée par population décroissante.
-     * Par exemple : /villes/populationBetween?populationMin=10000&populationMax=50000
-     *
-     * @param populationMin la population minimale
-     * @param populationMax la population maximale
-     * @return une liste de villes avec une population comprise entre les valeurs spécifiées
-     */
-    @GetMapping("/populationBetween")
-    @Override
-    public List<VilleDTO> getVillesByPopulationBetweenAndOrderByPopulationDesc(@RequestParam int populationMin,
-                                                                               @RequestParam int populationMax) throws ExceptionFonctionnelle {
-        return villeService.getVillesByPopulationBetweenAndOrderByPopulationDesc(populationMin, populationMax);
-    }
-
-    /**
-     * Récupère une liste de villes d'un département avec une population supérieure à la valeur spécifiée
-     * Triée par population décroissante.
-     * Par exemple : /villes/departement/27/popMin/100000
-     *
-     * @param code       le code du département
-     * @param population la population minimale
-     * @return une liste de villes d'un département avec une population supérieure à la valeur spécifiée
-     */
-    @GetMapping("/departement/{code}/popMin/{population}")
-    @Override
-    public List<VilleDTO> getVillesByDepartementCodeAndPopulationGreaterThanOderByPopulationDesc(@PathVariable String code,
-                                                                                                 @PathVariable int population) throws ExceptionFonctionnelle {
-        return villeService.getVillesByDepartementCodeAndPopulationGreaterThanOrderByPopulationDesc(code, population);
-    }
-
-    /**
-     * Récupère une liste de villes d'un département avec une population comprise entre les valeurs spécifiées
-     * Triée par population décroissante.
-     * Par exemple : /villes/departement/34/populationBetween?populationMin=10000&populationMax=50000
-     *
-     * @param code          le code du département
-     * @param populationMin la population minimale
-     * @param populationMax la population maximale
-     * @return une liste de villes d'un département avec une population comprise entre les valeurs spécifiées
-     */
-
-    @GetMapping("/departement/{code}/populationBetween")
-    @Override
-    public List<VilleDTO> getVilleByDepartementCodeAndPopulationBetweenOderByPopulationDesc(@PathVariable String code,
-                                                                                            @RequestParam int populationMin,
-                                                                                            @RequestParam int populationMax)  throws ExceptionFonctionnelle{
-        return villeService.getVilleByDepartementCodeAndPopulationBetweenOrderByPopulationDesc(code, populationMin,
-                populationMax);
-    }
-
-    /**
-     * @return la liste des N villes les plus peuplées
-     * @throws ExceptionFonctionnelle
-     */
-
-    @GetMapping("/top")
-    @Override
-    public List<VilleDTO> getTopNVillesByPopulation() throws ExceptionFonctionnelle {
-        return villeService.getTopNVillesByPopulation();
-    }
+    void exportCSV(Integer popMin, HttpServletResponse response) throws ExceptionFonctionnelle, IOException,
+            DocumentException;
 }

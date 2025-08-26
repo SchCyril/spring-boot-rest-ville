@@ -1,22 +1,30 @@
-package fr.diginamic.hello.services;
+package fr.diginamic.hello.impl;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.pdf.PdfWriter;
 import fr.diginamic.hello.dto.VilleDTO;
 import fr.diginamic.hello.entities.Departement;
 import fr.diginamic.hello.entities.Ville;
 import fr.diginamic.hello.exceptions.ExceptionFonctionnelle;
 import fr.diginamic.hello.repositories.DepartementRepository;
 import fr.diginamic.hello.repositories.VilleRepository;
+import fr.diginamic.hello.services.IVilleService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 @Service
-public class VilleService {
+public class VilleServiceImpl implements IVilleService {
     /**
      * Service pour gérer les opérations liées aux villes.
      */
@@ -29,7 +37,7 @@ public class VilleService {
      *
      * @param villeRepository le repository pour accéder aux données des villes
      */
-    public VilleService(VilleRepository villeRepository, DepartementRepository departementRepository, MessageSource messageSource) {
+    public VilleServiceImpl(VilleRepository villeRepository, DepartementRepository departementRepository, MessageSource messageSource) {
         this.villeRepository = villeRepository;
         this.departementRepository = departementRepository;
         this.messageSource = messageSource;
@@ -40,12 +48,14 @@ public class VilleService {
      *
      * @return une liste de toutes les villes
      */
+    @Override
     public List<VilleDTO> extractVilles() {
         return villeRepository.findAll().stream()
                 .map(VilleDTO::fromEntity)
                 .toList();
     }
 
+    @Override
     public Page<VilleDTO> getVillesPagination(int page, int size) {
         PageRequest pagination = PageRequest.of(page, size);
         return villeRepository.findAll(pagination).map(VilleDTO::fromEntity);
@@ -58,6 +68,7 @@ public class VilleService {
      * @return une Optional contenant la ville si elle existe, sinon une exception est levée
      */
 
+    @Override
     public VilleDTO extractVille(int idVille) throws ExceptionFonctionnelle {
         return villeRepository.findById((long) idVille).map(VilleDTO::fromEntity).orElseThrow(() -> new ExceptionFonctionnelle(messageSource.getMessage("ville.notfound", null, LocaleContextHolder.getLocale())));
     }
@@ -68,6 +79,7 @@ public class VilleService {
      * @param nom le nom de la ville
      * @return une Optional contenant le nom de la ville si elle existe, sinon une exception est levée
      */
+    @Override
     public VilleDTO extractVille(String nom) {
         return villeRepository.findByNom(nom)
                 .map(VilleDTO::fromEntity)
@@ -80,6 +92,7 @@ public class VilleService {
      * @param villeDto la ville à insérer
      * @return une liste de toutes les villes après l'insertion
      */
+    @Override
     public List<VilleDTO> insertVille(VilleDTO villeDto) throws ExceptionFonctionnelle {
         if (villeDto.nom() == null) {
             throw new ExceptionFonctionnelle("Le nom ne peut pas être nul");
@@ -114,6 +127,7 @@ public class VilleService {
     }
 
 
+    @Override
     public List<VilleDTO> updateVille(int idVille, VilleDTO villeModifiee) throws ExceptionFonctionnelle {
         // Récupérer la ville existante
         Ville villeExistante = villeRepository.findById((long) idVille)
@@ -144,6 +158,7 @@ public class VilleService {
                 .toList();
     }
 
+    @Override
     public List<VilleDTO> deleteVille(int idVille) throws ExceptionFonctionnelle {
         Ville ville = villeRepository.findById((long) idVille)
                 .orElseThrow(() -> new ExceptionFonctionnelle("Ville n'existe pas avec l'ID : " + idVille));
@@ -162,6 +177,7 @@ public class VilleService {
      * @throws EntityNotFoundException si aucune ville n'est trouvée
      */
 
+    @Override
     public List<VilleDTO> getVillesByNomContaining(String nom) throws ExceptionFonctionnelle {
 
         List<Ville> villes = villeRepository.findByNomContaining(nom);
@@ -185,6 +201,7 @@ public class VilleService {
      */
 
 
+    @Override
     public List<VilleDTO> getVillesByPopulationGreaterThan(int population) throws ExceptionFonctionnelle {
 
         List<Ville> villes = villeRepository.findByPopulationGreaterThanOrderByPopulationDesc(population);
@@ -204,6 +221,7 @@ public class VilleService {
      * @return une liste de villes avec une population comprise entre les valeurs spécifiées
      * @throws EntityNotFoundException si aucune ville n'est trouvée
      */
+    @Override
     public List<VilleDTO> getVillesByPopulationBetweenAndOrderByPopulationDesc(int min, int max) throws ExceptionFonctionnelle {
         List<Ville> villes = villeRepository.findByPopulationBetweenOrderByPopulationDesc(min, max);
         if (villes.isEmpty()) {
@@ -212,6 +230,7 @@ public class VilleService {
         return villes.stream().map(VilleDTO::fromEntity).toList();
     }
 
+    @Override
     public List<VilleDTO> getVillesByDepartementCodeAndPopulationGreaterThanOrderByPopulationDesc(String code,
                                                                                                   int population) throws ExceptionFonctionnelle {
         List<Ville> villes = villeRepository.findByDepartementCodeAndPopulationGreaterThanOrderByPopulationDesc(code,
@@ -222,6 +241,7 @@ public class VilleService {
         return villes.stream().map(VilleDTO::fromEntity).toList();
     }
 
+    @Override
     public List<VilleDTO> getVilleByDepartementCodeAndPopulationBetweenOrderByPopulationDesc(String code, Integer min
             , Integer max) throws ExceptionFonctionnelle{
         List<Ville> villes = villeRepository.findByDepartementCodeAndPopulationBetweenOrderByPopulationDesc(code,
@@ -232,12 +252,33 @@ public class VilleService {
         return villes.stream().map(VilleDTO::fromEntity).toList();
     }
 
+    @Override
     public List<VilleDTO> getTopNVillesByPopulation() throws  ExceptionFonctionnelle {
         List<Ville> villes = villeRepository.findTop10ByOrderByPopulationDesc();
         if (villes.isEmpty()) {
             throw new ExceptionFonctionnelle("Aucune ville trouvée.");
         }
         return villes.stream().map(VilleDTO::fromEntity).toList();
+    }
+
+    @Override
+    public void exportCsvVillesSupMin( Integer popMin, HttpServletResponse response) throws ExceptionFonctionnelle, IOException, DocumentException {
+        List<Ville> villes = villeRepository.findByPopulationGreaterThanOrderByPopulationDesc(popMin);
+
+        response.setContentType("text/csv; charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=villes.csv");
+
+       try (PrintWriter writer = response.getWriter()) {
+           writer.println("Nom;Population;Departement");
+           for (Ville ville : villes) {
+               writer.printf("%s;%d;%s%n",
+                      ville.getNom(),
+                      ville.getPopulation(),
+                      ville.getDepartement().getCode());
+           }
+       }
+
+
     }
 
 
