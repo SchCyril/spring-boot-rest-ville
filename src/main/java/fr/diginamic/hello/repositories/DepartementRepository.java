@@ -14,7 +14,8 @@ public interface DepartementRepository extends JpaRepository<Departement, Long> 
 
     Optional<Departement> findByCode(String code);
 
-    //@Query("SELECT v FROM Ville v WHERE v.departement.code = :code AND v.population BETWEEN :min AND :max")
+    boolean existsByNom(String nom);
+    boolean existsByCode(String code);
 
 
 }

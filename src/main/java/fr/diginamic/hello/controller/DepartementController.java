@@ -2,6 +2,7 @@ package fr.diginamic.hello.controller;
 
 import fr.diginamic.hello.dto.DepartementDTO;
 import fr.diginamic.hello.dto.VilleDTO;
+import fr.diginamic.hello.exceptions.ExceptionFonctionnelle;
 import fr.diginamic.hello.services.DepartementService;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,7 +38,7 @@ public class DepartementController {
      */
 
     @GetMapping("/departement/{code}")
-    public DepartementDTO getDepartementByCode(@PathVariable String code) {
+    public DepartementDTO getDepartementByCode(@PathVariable String code) throws ExceptionFonctionnelle {
         return departementService.getDepartementByCode(code);
     }
 
@@ -49,7 +50,7 @@ public class DepartementController {
      */
 
     @PostMapping
-    public List<DepartementDTO> addDepartement(@RequestBody DepartementDTO departement) {
+    public List<DepartementDTO> addDepartement(@RequestBody DepartementDTO departement) throws ExceptionFonctionnelle {
         return departementService.addDepartement(departement);
     }
 
@@ -62,7 +63,7 @@ public class DepartementController {
      */
 
     @PutMapping("/departement/{code}")
-    public List<DepartementDTO> updateDepartement(@PathVariable String code, @RequestBody DepartementDTO departement) {
+    public List<DepartementDTO> updateDepartement(@PathVariable String code, @RequestBody DepartementDTO departement) throws ExceptionFonctionnelle {
         return departementService.updateDepartement(code, departement);
     }
 
@@ -73,7 +74,7 @@ public class DepartementController {
      */
 
     @DeleteMapping("/departement/{code}")
-    public List<DepartementDTO> deleteDepartement(@PathVariable String code) {
+    public List<DepartementDTO> deleteDepartement(@PathVariable String code) throws ExceptionFonctionnelle {
         departementService.deleteDepartement(code);
         return departementService.getAllDepartements();
     }
@@ -88,7 +89,7 @@ public class DepartementController {
 
     @GetMapping("/villes/{dep}/{nb}")
     public List<VilleDTO> getVillesByDepartementAndNombre(@PathVariable("dep") String code,
-                                                          @PathVariable("nb") int nombre) {
+                                                          @PathVariable("nb") int nombre) throws ExceptionFonctionnelle {
 
         return departementService.getVillesByDepartementAndNombre(code, nombre);
     }
@@ -106,7 +107,7 @@ public class DepartementController {
     @GetMapping("/villes/search")
     public List<VilleDTO> getVillesByDepartementAndPopulationRange(@RequestParam("code") String departementCode,
                                                                 @RequestParam("min") Integer populationMin,
-                                                                @RequestParam("max") Integer populationMax) {
+                                                                @RequestParam("max") Integer populationMax) throws ExceptionFonctionnelle {
         return departementService.getVillesByDepartementAndPopulationRange(departementCode, populationMin, populationMax);
     }
 

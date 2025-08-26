@@ -19,8 +19,14 @@ public class Ville {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
+    @NotNull(message = "Le nom de la ville est obligatoire")
+    @Size(min = 2, message = "Le nom de la ville doit contenir au moins 3 lettres")
     private String nom;
     @Column(name= "nb_habs")
+
+    @NotNull(message = "La population est obligatoire")
+    @Min(value = 10, message = "La ville doit contenir au moins 10 habitants")
     private Integer population;
 
     @ManyToOne

@@ -2,16 +2,16 @@ package fr.diginamic.hello.controller;
 
 import fr.diginamic.hello.dto.VilleDTO;
 import fr.diginamic.hello.entities.Ville;
+import fr.diginamic.hello.exceptions.ExceptionFonctionnelle;
 import fr.diginamic.hello.services.VilleService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/villes")
-public class VilleController {
+public class VilleController implements InterfaceVilleController {
 
     private final VilleService villeService;
 
@@ -27,24 +27,28 @@ public class VilleController {
      * @return la liste de toutes les villes
      */
 
+
+
     @GetMapping()
-    public List<VilleDTO> getVilles(@RequestParam int page, @RequestParam int size) {
+    @Override
+    public List<VilleDTO> getVilles() {
         return villeService.extractVilles();
     }
 
-//    /**
-//     * Récupère la liste de toutes les villes en Pagination
-//     * Exemple http://localhost:8080/villes/pagination?page=0&size=5
-//     *
-//     * @param page
-//     * @param size
-//     * @return la liste de toutes les villes
-//     */
-//
-//    @GetMapping("/pagination")
-//    public Page<VilleDTO> getVillesPagination(@RequestParam int page, @RequestParam int size) {
-//        return villeService.getVillesPagination(page, size);
-//    }
+    /**
+     * Récupère la liste de toutes les villes en Pagination
+     * Exemple http://localhost:8080/villes/pagination?page=0&size=5
+     *
+     * @param page
+     * @param size
+     * @return la liste de toutes les villes
+     */
+
+    @GetMapping("/pagination")
+    @Override
+    public Page<VilleDTO> getVillesPagination(@RequestParam int page, @RequestParam int size) throws ExceptionFonctionnelle {
+        return villeService.getVillesPagination(page, size);
+    }
 
     /**
      * Affiche la ville cherchée par son ID
@@ -54,7 +58,8 @@ public class VilleController {
      */
 
     @GetMapping("/ville-id/{id}")
-    public VilleDTO getVilleById(@PathVariable int id) {
+    @Override
+    public VilleDTO getVilleById(@PathVariable int id) throws ExceptionFonctionnelle {
         return villeService.extractVille(id);
     }
 
@@ -66,7 +71,8 @@ public class VilleController {
      */
 
     @GetMapping("/ville-nom/{nom}")
-    public VilleDTO getVilleByNom(@PathVariable String nom) {
+    @Override
+    public VilleDTO getVilleByNom(@PathVariable String nom) throws ExceptionFonctionnelle {
         return villeService.extractVille(nom);
     }
 
@@ -77,7 +83,8 @@ public class VilleController {
      * @return la liste de toutes les villes après ajout de la nouvelle Ville
      */
     @PostMapping("/ville")
-    public List<VilleDTO> addVille(@RequestBody VilleDTO villeDTO) {
+    @Override
+    public List<VilleDTO> addVille(@RequestBody VilleDTO villeDTO) throws ExceptionFonctionnelle {
         return villeService.insertVille(villeDTO);
     }
 
@@ -90,7 +97,8 @@ public class VilleController {
      */
 
     @PutMapping("/ville/{id}")
-    public List<VilleDTO> updateVille(@PathVariable int id, @RequestBody VilleDTO ville) {
+    @Override
+    public List<VilleDTO> updateVille(@PathVariable int id, @RequestBody VilleDTO ville) throws ExceptionFonctionnelle {
         return villeService.updateVille(id, ville);
     }
 
@@ -102,7 +110,8 @@ public class VilleController {
      */
 
     @DeleteMapping("/ville/{id}")
-    public List<VilleDTO> deleteVille(@PathVariable int id) {
+    @Override
+    public List<VilleDTO> deleteVille(@PathVariable int id) throws ExceptionFonctionnelle {
         return villeService.deleteVille(id);
     }
 
@@ -114,7 +123,8 @@ public class VilleController {
      * @return une liste de villes dont le nom contient la chaîne spécifiée
      */
     @GetMapping("/contains")
-    public List<VilleDTO> getVillesByNomContaining(@RequestParam String nom) {
+    @Override
+    public List<VilleDTO> getVillesByNomContaining(@RequestParam String nom) throws ExceptionFonctionnelle {
         return villeService.getVillesByNomContaining(nom);
     }
 
@@ -126,7 +136,8 @@ public class VilleController {
      * @return une liste de villes avec une population supérieure à la valeur spécifiée
      */
     @GetMapping("/popMin/{population}")
-    public List<VilleDTO> getVillesByPopulationGreaterThan(@PathVariable int population) {
+    @Override
+    public List<VilleDTO> getVillesByPopulationGreaterThan(@PathVariable int population) throws ExceptionFonctionnelle {
         return villeService.getVillesByPopulationGreaterThan(population);
     }
 
@@ -140,8 +151,9 @@ public class VilleController {
      * @return une liste de villes avec une population comprise entre les valeurs spécifiées
      */
     @GetMapping("/populationBetween")
+    @Override
     public List<VilleDTO> getVillesByPopulationBetweenAndOrderByPopulationDesc(@RequestParam int populationMin,
-                                                                               @RequestParam int populationMax) {
+                                                                               @RequestParam int populationMax) throws ExceptionFonctionnelle {
         return villeService.getVillesByPopulationBetweenAndOrderByPopulationDesc(populationMin, populationMax);
     }
 
@@ -155,8 +167,9 @@ public class VilleController {
      * @return une liste de villes d'un département avec une population supérieure à la valeur spécifiée
      */
     @GetMapping("/departement/{code}/popMin/{population}")
+    @Override
     public List<VilleDTO> getVillesByDepartementCodeAndPopulationGreaterThanOderByPopulationDesc(@PathVariable String code,
-                                                                                                 @PathVariable int population) {
+                                                                                                 @PathVariable int population) throws ExceptionFonctionnelle {
         return villeService.getVillesByDepartementCodeAndPopulationGreaterThanOrderByPopulationDesc(code, population);
     }
 
@@ -172,10 +185,22 @@ public class VilleController {
      */
 
     @GetMapping("/departement/{code}/populationBetween")
+    @Override
     public List<VilleDTO> getVilleByDepartementCodeAndPopulationBetweenOderByPopulationDesc(@PathVariable String code,
-                                                                                           @RequestParam int populationMin,
-                                                                                           @RequestParam int populationMax) {
+                                                                                            @RequestParam int populationMin,
+                                                                                            @RequestParam int populationMax)  throws ExceptionFonctionnelle{
         return villeService.getVilleByDepartementCodeAndPopulationBetweenOrderByPopulationDesc(code, populationMin,
                 populationMax);
+    }
+
+    /**
+     * @return la liste des N villes les plus peuplées
+     * @throws ExceptionFonctionnelle
+     */
+
+    @GetMapping("/top")
+    @Override
+    public List<VilleDTO> getTopNVillesByPopulation() throws ExceptionFonctionnelle {
+        return villeService.getTopNVillesByPopulation();
     }
 }

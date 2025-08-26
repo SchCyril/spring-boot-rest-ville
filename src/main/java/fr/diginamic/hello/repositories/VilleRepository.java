@@ -16,6 +16,9 @@ public interface VilleRepository extends JpaRepository<Ville, Long> {
 
     Optional<Ville> findByNom(String nom);
     List<Ville> findByDepartementCode(String code);
+
+    boolean existsByNomAndDepartement(String nom, Departement departement);
+
     List<Ville> findByDepartementCodeAndPopulationBetween(String code, Integer min, Integer max);
 
     List<Ville> findByNomContaining(String nom);
@@ -28,7 +31,7 @@ public interface VilleRepository extends JpaRepository<Ville, Long> {
 
     List<Ville> findByDepartementCodeAndPopulationBetweenOrderByPopulationDesc(String code, Integer min, Integer max);
 
-    List<Ville> findTopNByPopulation(int n);
+    List<Ville> findTop10ByOrderByPopulationDesc();
 
 
 
